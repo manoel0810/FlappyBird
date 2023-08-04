@@ -13,11 +13,13 @@ namespace FlappyBird
         private static GameState Instance;
         private readonly Counter Contador;
         private readonly MainWindow Main;
+        private readonly Pipe Pipes;
         private readonly int FrameRate = 60;
         private readonly double TimePerFrame = 0d;
 
         private readonly Bird Passaro;
         private BirdColor birdColor;
+        private GameTime TimeOfDay;
         private bool IsGameOver = false;
         private bool IsGameRunnin = false;
         private bool StartGame = false;
@@ -53,25 +55,38 @@ namespace FlappyBird
 
         private readonly ImageSource GameOverImage = new BitmapImage(new Uri("Assets/gameover.png", UriKind.Relative));
 
-        public static GameState GetInstace(MainWindow Windows, int Rate = 60)
+        public static GameState GetInstace(ref MainWindow Windows, int Rate = 60)
         {
-            Instance ??= new GameState(Windows, Rate);
+            Instance ??= new GameState(ref Windows, Rate);
             return Instance;
         }
 
-        private GameState(MainWindow Windows, int Rate = 60)
+        private GameState(ref MainWindow Windows, int Rate = 60)
         {
             Main = Windows;
+            RandomDayTime();
+
             FrameRate = Rate;
             Contador = Counter.GetInstance();
             TimePerFrame = FrameToTime();
-            Passaro = new Bird(Windows);
+            Pipes = Pipe.GetInstance(ref Windows, TimeOfDay);
+            Passaro = new Bird(new Thickness(Windows.Bird.Margin.Left, Windows.Bird.Margin.Top, Windows.Bird.Margin.Right, Windows.Bird.Margin.Bottom));
             RandomSkin();
         }
 
         public void MouseState(bool state)
         {
             MouseUp = state;
+        }
+
+        private void RandomDayTime()
+        {
+            var random = new Random();
+            int EnumIndex = random.Next(0, 2);
+            TimeOfDay = (GameTime)(EnumIndex <= 1 ? EnumIndex : 2);
+
+            if (TimeOfDay == GameTime.Night)
+                Main.GameTemplate.Source = new BitmapImage(new Uri("Assets/background-night.png", UriKind.Relative));
         }
 
         private void RandomSkin()
@@ -105,7 +120,7 @@ namespace FlappyBird
 
         private void UpdateBirdSkin()
         {
-            if (FrameCount % 3 != 0)
+            if (FrameCount % 4 != 0)
                 return;
 
             if (birdColor == BirdColor.Blue)
@@ -138,51 +153,20 @@ namespace FlappyBird
 
         private void SetBird()
         {
-            Passaro.Position = new Pos(60f, Passaro.Position.GetPosition().Y - 2f);
             Main.Bird.Margin = GetNewThickness(Main.Bird.Margin);
             UpdateBirdSourceImage();
         }
 
-        private BitmapSource Rotate(BitmapSource originalImage, double angleInDegrees)
-        {
-            // Crie uma matriz de transformação para aplicar a rotação
-            var transform = new RotateTransform(angleInDegrees);
-
-            // Crie um DrawingVisual para renderizar a imagem com a rotação
-            var drawingVisual = new DrawingVisual();
-            using (var drawingContext = drawingVisual.RenderOpen())
-            {
-                drawingContext.PushTransform(transform);
-                drawingContext.DrawImage(originalImage, new Rect(new Size(originalImage.PixelWidth, originalImage.PixelHeight)));
-                drawingContext.Pop();
-            }
-
-            // Renderize o DrawingVisual em um novo RenderTargetBitmap para criar a imagem BitmapSource rotacionada
-            var rotatedImage = new RenderTargetBitmap(
-                originalImage.PixelWidth, originalImage.PixelHeight,
-                originalImage.DpiX, originalImage.DpiY,
-                PixelFormats.Default);
-            rotatedImage.Render(drawingVisual);
-
-            return rotatedImage;
-        }
-
-        private void RotateSkin(double Angle, ImageSource Src)
-        {
-            var IMG = Rotate((BitmapSource)Src, Angle);
-            Passaro.BirdImage = IMG;
-        }
-
         private void BirdMove()
         {
-            Thickness Actual = Main.Bird.Margin;
+            Thickness Actual = Passaro.Position;
             if (!MouseUp)
             {
                 if (Actual.Top <= 0)
                     return;
 
-                Main.Bird.Margin = new Thickness(50, Actual.Top - FallVelocity, 300, Actual.Bottom + FallVelocity);
-                //RotateSkin(-(Math.PI / 4), Passaro.BirdImage);
+                Passaro.Position = new Thickness(50, Actual.Top - FallVelocity, 300, Actual.Bottom + FallVelocity);
+                Main.Bird.Margin = Passaro.Position;
             }
             else
             {
@@ -192,9 +176,8 @@ namespace FlappyBird
                     return;
                 }
 
-
-                Main.Bird.Margin = new Thickness(50, Actual.Top + FallVelocity, 300, Actual.Bottom - FallVelocity);
-                //RotateSkin(Math.PI / 4, Passaro.BirdImage);
+                Passaro.Position = new Thickness(50, Actual.Top + FallVelocity, 300, Actual.Bottom - FallVelocity);
+                Main.Bird.Margin = Passaro.Position;
             }
         }
 
@@ -208,6 +191,7 @@ namespace FlappyBird
                 {
                     UpdateBirdSourceImage();
                     BirdMove();
+                    Pipes.Move(10);
                 }
             }
         }
@@ -220,6 +204,7 @@ namespace FlappyBird
 
         public void InitializeGameState()
         {
+            Pipes.Load();
             Tick();
         }
 
@@ -250,6 +235,12 @@ namespace FlappyBird
             Blue,
             Red,
             Yellow
+        }
+
+        public enum GameTime
+        {
+            Day,
+            Night
         }
     }
 }

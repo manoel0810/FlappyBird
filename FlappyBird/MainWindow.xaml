@@ -15,10 +15,10 @@
         MouseDown="Window_MouseDown"
         MouseUp="Window_MouseUp"
         WindowStartupLocation="CenterScreen">
-    <Grid>
-        <Grid.Background>
-            <ImageBrush ImageSource="Assets/background-day.png"/>
-        </Grid.Background>
+    <Grid x:Name="MainGrid">
+        <Image x:Name="GameTemplate"
+               Source="Assets/background-day.png"
+               Stretch="Fill"/>
         <Image x:Name="StartImage"
                     Margin="60"
                     Width="200"

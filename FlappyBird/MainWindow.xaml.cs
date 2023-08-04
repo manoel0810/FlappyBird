@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Windows;
 using System.Windows.Input;
 
 namespace FlappyBird
@@ -10,11 +11,15 @@ namespace FlappyBird
     {
         private const int FrameRate = 60;
         private readonly GameState gameState;
+        [AllowNull]
+        private static MainWindow Main;
 
         public MainWindow()
         {
             InitializeComponent();
-            gameState = GameState.GetInstace(this, FrameRate);
+            Main = this;
+
+            gameState = GameState.GetInstace(ref Main, FrameRate);
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)

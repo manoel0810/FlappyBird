@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
+using System.Windows;
 using System.Windows.Media;
 
 namespace FlappyBird
@@ -8,11 +9,17 @@ namespace FlappyBird
     {
         [AllowNull]
         private ImageSource BirdSkin;
-        public Pos Position;
+        private Thickness T;
 
-        public Bird(MainWindow Main)
+        public Bird(Thickness t)
         {
-            Position = new Pos(60f, (float)(Main.Height / 2));
+            T = t;
+        }
+
+        public Thickness Position
+        {
+            get => T;
+            set => T = value;
         }
 
         public ImageSource BirdImage
@@ -21,28 +28,5 @@ namespace FlappyBird
             set => BirdSkin = value;
         }
 
-    }
-
-    public class Pos
-    {
-        float x;
-        float y;
-
-        public Pos(float X, float Y)
-        {
-            x = X;
-            y = Y;
-        }
-
-        public Vector2 GetPosition()
-        {
-            return new Vector2(x, y);
-        }
-
-        public void SetPosition(Vector2 newPos)
-        {
-            x = newPos.X;
-            y = newPos.Y;
-        }
     }
 }
