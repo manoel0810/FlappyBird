@@ -14,12 +14,17 @@ namespace FlappyBird
         [AllowNull]
         private static MainWindow Main;
 
+        public static MainWindow Instance 
+        { 
+            get => Main;
+        }
+
         public MainWindow()
         {
             InitializeComponent();
             Main = this;
 
-            gameState = GameState.GetInstace(ref Main, FrameRate);
+            gameState = GameState.GetInstace(FrameRate);
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)

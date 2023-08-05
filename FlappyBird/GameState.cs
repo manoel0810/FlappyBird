@@ -26,7 +26,7 @@ namespace FlappyBird
         private bool Reverse = false;
         private bool MouseUp = false;
 
-        private int FallVelocity = 8;
+        private int FallVelocity = 4;
         private int Decremente = 2;
         private int SkinIndex = 0;
         private int FrameCount = 0;
@@ -55,22 +55,22 @@ namespace FlappyBird
 
         private readonly ImageSource GameOverImage = new BitmapImage(new Uri("Assets/gameover.png", UriKind.Relative));
 
-        public static GameState GetInstace(ref MainWindow Windows, int Rate = 60)
+        public static GameState GetInstace(int Rate = 60)
         {
-            Instance ??= new GameState(ref Windows, Rate);
+            Instance ??= new GameState(Rate);
             return Instance;
         }
 
-        private GameState(ref MainWindow Windows, int Rate = 60)
+        private GameState(int Rate = 60)
         {
-            Main = Windows;
+            Main = MainWindow.Instance;
             RandomDayTime();
 
             FrameRate = Rate;
             Contador = Counter.GetInstance();
             TimePerFrame = FrameToTime();
-            Pipes = Pipe.GetInstance(ref Windows, TimeOfDay);
-            Passaro = new Bird(new Thickness(Windows.Bird.Margin.Left, Windows.Bird.Margin.Top, Windows.Bird.Margin.Right, Windows.Bird.Margin.Bottom));
+            Pipes = Pipe.GetInstance(TimeOfDay);
+            Passaro = new Bird(new Thickness(Main.Bird.Margin.Left, Main.Bird.Margin.Top, Main.Bird.Margin.Right, Main.Bird.Margin.Bottom));
             RandomSkin();
         }
 
@@ -172,7 +172,9 @@ namespace FlappyBird
             {
                 if (Actual.Bottom <= 80)
                 {
-                    IsGameOver = true;
+#if !DEBUG
+                    IsGameOver = true;        
+#endif
                     return;
                 }
 
@@ -191,7 +193,8 @@ namespace FlappyBird
                 {
                     UpdateBirdSourceImage();
                     BirdMove();
-                    Pipes.Move(10);
+                    Pipes.Move(2);
+                    IsGameOver = Pipes.BirdHits(Passaro);
                 }
             }
         }

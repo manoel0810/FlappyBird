@@ -30,5 +30,23 @@
         <Image x:Name="Bird"
                     Margin="50,340,300,190"
                Stretch="Fill"/>
+        <Grid x:Name="PipesSection" x:FieldModifier="public" Panel.ZIndex="10">
+            <Image x:Name="p1"
+                   Margin="180,0,170,300"
+                   Stretch="Fill"
+                   Visibility="Visible"/>
+            <Image x:Name="p2"
+                   Margin="180,400,170,0"
+                   Stretch="Fill"
+                   Visibility="Visible"/>
+            <Image x:Name="p3"
+                   Margin="300,0,50,300"
+                   Stretch="Fill"
+                   Visibility="Visible"/>
+            <Image x:Name="p4"
+                   Margin="300,400,50,0"
+                   Stretch="Fill"
+                   Visibility="Visible"/>
+        </Grid>
     </Grid>
 </Window>

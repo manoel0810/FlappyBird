@@ -27,7 +27,9 @@
     <None Remove="Assets\flappy.ico" />
     <None Remove="Assets\gameover.png" />
     <None Remove="Assets\message.png" />
+    <None Remove="Assets\pipe-green-down.png" />
     <None Remove="Assets\pipe-green.png" />
+    <None Remove="Assets\pipe-red-down.png" />
     <None Remove="Assets\pipe-red.png" />
     <None Remove="Assets\redbird-downflap.png" />
     <None Remove="Assets\redbird-midflap.png" />
@@ -61,7 +63,9 @@
     <Resource Include="Assets\flappy.ico" />
     <Resource Include="Assets\gameover.png" />
     <Resource Include="Assets\message.png" />
+    <Resource Include="Assets\pipe-green-down.png" />
     <Resource Include="Assets\pipe-green.png" />
+    <Resource Include="Assets\pipe-red-down.png" />
     <Resource Include="Assets\pipe-red.png" />
     <Resource Include="Assets\redbird-downflap.png" />
     <Resource Include="Assets\redbird-midflap.png" />

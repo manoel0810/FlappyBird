@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -11,223 +10,145 @@ namespace FlappyBird
     public class Pipe
     {
         [AllowNull]
-        private static Pipe Instance;
-        private const int MinimumSpace = 20;
-        private readonly MainWindow Main;
-        private readonly Random Randomizer = new();
-        private readonly GameState.GameTime TimeOfDay;
-        private List<PipeImage[]> Pares = new();
-        private int ElementCount = 0;
-        private bool AddDistance = false;
+        private static Pipe _instance;
+        private readonly MainWindow _main;
+        private readonly Random _randomizer = new();
+        private readonly GameState.GameTime _timeOfDay;
+        private List<Thickness> Thicknesses = new();
+        private readonly int Spacing = 150;
 
-        private readonly ImageSource[] Pipes = new ImageSource[]
+        private readonly ImageSource[] _pipesUp = new ImageSource[]
         {
             new BitmapImage(new Uri("Assets/pipe-green.png", UriKind.Relative)),
             new BitmapImage(new Uri("Assets/pipe-red.png", UriKind.Relative)),
         };
 
-        public static Pipe GetInstance(ref MainWindow Window, GameState.GameTime Time)
+        private readonly ImageSource[] _pipesDown = new ImageSource[]
         {
-            Instance ??= new Pipe(ref Window, Time);
-            return Instance;
+            new BitmapImage(new Uri("Assets/pipe-green-down.png", UriKind.Relative)),
+            new BitmapImage(new Uri("Assets/pipe-red-down.png", UriKind.Relative)),
+        };
+
+        private Pipe(GameState.GameTime time)
+        {
+            _main = MainWindow.Instance;
+            _timeOfDay = time;
         }
 
-        private Pipe(ref MainWindow Window, GameState.GameTime Time)
+        public static Pipe GetInstance(GameState.GameTime time)
         {
-            Main = Window;
-            TimeOfDay = Time;
+            _instance ??= new Pipe(time);
+            return _instance;
         }
 
-        private Thickness CalculateThinckness(PipeModel Model, int Height)
+        private double[] GetRandomizedTopBottom()
         {
-            Thickness T = new()
-            {
-                Left = Main.Width,
-                Right = AddDistance ? -40 : 0
-            };
+            int point = _randomizer.Next(200, 400);
+            return new double[] { point + Spacing, 600 - (point + Spacing / 2) };
+        }
 
-            AddDistance = !AddDistance;
-            if (Model == PipeModel.Bottom)
+        private void CreateMargins()
+        {
+            for (int i = 0; i < 2; i++)
             {
-                T.Bottom = Height;
-                T.Top = Main.Height - T.Bottom;
+                int plus = i == 0 ? 0 : 150;
+                double[] values = GetRandomizedTopBottom();
+                Thicknesses.Add(new Thickness(400 + plus, 0, -50 + -plus, values[0]));
+                Thicknesses.Add(new Thickness(400 + plus, values[1], -50 + -plus, 0));
             }
-            else if (Model == PipeModel.Top)
-            {
-                T.Top = Height;
-                T.Bottom = Main.Height - T.Top;
-            }
-
-            return T;
         }
 
-        private void GeneratePipes(ref List<PipeImage[]> pipes)
+        private void RecalculateMargins(double Increment)
         {
-            int iteracoes = 2 - pipes.Count;
-            for (int i = 0; i < iteracoes; i++)
+            if (Thicknesses.Count < 4)
+                CreateMargins();
+
+            for (int i = 0; i < Thicknesses.Count; i++)
+                Thicknesses[i] = new Thickness(Thicknesses[i].Left - Increment, Thicknesses[i].Top, Thicknesses[i].Right + Increment, Thicknesses[i].Bottom);
+        }
+
+        private void CheckOutside()
+        {
+            for (int i = 0; i < 2; i++)
             {
-                PipeImage[] PipesVector = new PipeImage[2];
-                for (int j = 0; j < 2; j++)
+                if (Thicknesses[(i == 0 ? 0 : 2)].Right >= 400)
                 {
-                    if (j == 0) //Bottom-top pipe
+
+                    int dist = _randomizer.Next(-100, -100);
+                    int left = Math.Abs(50 - Math.Abs(dist));
+
+                    if (i == 0)
                     {
-                        int Height = Randomizer.Next(200, 400);
-                        PipesVector[j] = new PipeImage((TimeOfDay == GameState.GameTime.Day ? Pipes[0] : Pipes[1]), CalculateThinckness(PipeModel.Bottom, Height), $"ui_element{ElementCount++}");
+                        double[] values = GetRandomizedTopBottom();
+                        Thicknesses[i] = new Thickness(400 + left, 0, dist, values[0]);
+                        Thicknesses[i + 1] = new Thickness(400 + left, values[1], dist, 0);
                     }
                     else
                     {
-                        int Resto = (int)Main.Height - (int)PipesVector[0].Margin.Bottom - MinimumSpace;
-                        int Height = Randomizer.Next(60, Resto);
-                        PipesVector[j] = new PipeImage((TimeOfDay == GameState.GameTime.Day ? Pipes[0] : Pipes[1]), CalculateThinckness(PipeModel.Bottom, Height), $"ui_element{ElementCount++}");
+                        double[] values = GetRandomizedTopBottom();
+                        Thicknesses[2] = new Thickness(400 + left, 0, dist, values[0]);
+                        Thicknesses[3] = new Thickness(400 + left, values[1], dist, 0);
                     }
                 }
-
-                pipes.Add(PipesVector);
             }
-
-            Pares = pipes;
         }
 
-        private void RemoveOusideElement(PipeImage Element)
+        public void Move(int length)
         {
-            for (int i = 0; i < Main.MainGrid.Children.Count; i++)
+            RecalculateMargins(length);
+            for (int i = 0; i < 4; i++)
             {
-                if (Main.MainGrid.Children[i] is Image Img)
+                switch (i)
                 {
-                    if (Img.Name == Element.Name)
-                    {
-                        Main.MainGrid.Children.RemoveAt(i);
+                    case 0:
+                        _main.p1.Margin = Thicknesses[0];
                         break;
-                    }
-                }
-            }
-        }
-
-        public List<PipeImage[]> GetAndUpdate()
-        {
-            List<PipeImage[]> temp = new();
-            if (Pares != null)
-            {
-                if (Pares.Count == 0)
-                {
-                    GeneratePipes(ref temp);
-                    return temp;
-                }
-                else
-                {
-                    foreach (var pipe in Pares)
-                    {
-                        if (!pipe[0].IsOutDisplay(Main))
-                            temp.Add(pipe);
-                        else
-                        {
-                            RemoveOusideElement(pipe[0]);
-                            RemoveOusideElement(pipe[1]);
-                        }
-                    }
-
-                    if (temp.Count < 2)
-                        GeneratePipes(ref temp);
-
-                    return temp;
-                }
-            }
-            else
-            {
-                GeneratePipes(ref temp);
-                return temp;
-            }
-        }
-
-        private static Thickness GetMove(Thickness CurrentPosition, int Length)
-        {
-            return new Thickness(CurrentPosition.Left - Length, CurrentPosition.Top, CurrentPosition.Right + Length, CurrentPosition.Bottom);
-        }
-
-        private void MovePipes(int Length)
-        {
-            foreach (var pipe in Pares)
-            {
-                for (int i = 0; i < 2; i++)
-                    pipe[i].Margin = GetMove(pipe[i].Margin, Length);
-            }
-        }
-
-        public void Move(int Length)
-        {
-            if (Pares.Count != 0)
-            {
-                foreach (var pipe in Pares)
-                {
-                    for (int i = 0; i < 2; i++)
-                    {
-                        for (int j = 0; j < Main.MainGrid.Children.Count; j++)
-                        {
-                            if (Main.MainGrid.Children[j] is Image imageControl)
-                            {
-                                if (imageControl.Name == pipe[i].Name)
-                                {
-                                    imageControl.Margin = GetMove(imageControl.Margin, Length);
-                                }
-                            }
-                        }
-                    }
+                    case 1:
+                        _main.p2.Margin = Thicknesses[1];
+                        break;
+                    case 2:
+                        _main.p3.Margin = Thicknesses[2];
+                        break;
+                    case 3:
+                        _main.p4.Margin = Thicknesses[3];
+                        break;
                 }
             }
 
-            _ = GetAndUpdate();
+            CheckOutside();
+        }
+
+        public bool BirdHits(Bird Passaro)
+        {
+            if ((Passaro.Position.Bottom >= 600 - Thicknesses[1].Top && Passaro.Position.Top >= 600 - Thicknesses[0].Bottom) || Passaro.Position.Right >= Thicknesses[0].Right)
+                return false;
+
+            return true;
+        }
+
+        private void SetImage()
+        {
+            _main.p1.Source = _timeOfDay == GameState.GameTime.Day ? _pipesDown[0] : _pipesDown[1];
+            _main.p1.Margin = Thicknesses[0];
+            _main.p1.Visibility = Visibility.Visible;
+
+            _main.p2.Source = _timeOfDay == GameState.GameTime.Day ? _pipesUp[0] : _pipesUp[1];
+            _main.p2.Margin = Thicknesses[1];
+            _main.p2.Visibility = Visibility.Visible;
+
+            _main.p3.Source = _timeOfDay == GameState.GameTime.Day ? _pipesDown[0] : _pipesDown[1];
+            _main.p3.Margin = Thicknesses[2];
+            _main.p3.Visibility = Visibility.Visible;
+
+            _main.p4.Source = _timeOfDay == GameState.GameTime.Day ? _pipesUp[0] : _pipesUp[1];
+            _main.p4.Margin = Thicknesses[3];
+            _main.p4.Visibility = Visibility.Visible;
         }
 
         public void Load()
         {
-            var UIElements = GetAndUpdate();
-            foreach (var element in UIElements)
-            {
-                for (int i = 0; i < 2; i++)
-                {
-                    int index = Main.MainGrid.Children.Add(element[i].ControlImage);
-                    Main.MainGrid.Children[index].Visibility = Visibility.Visible;
-                }
-            }
+            CreateMargins();
+            SetImage();
         }
-
-        public class PipeImage
-        {
-            public Image ControlImage;
-            public ImageSource img;
-            public Thickness Margin;
-            public string Name;
-
-            public PipeImage(ImageSource Pipe, Thickness T, string ElementName)
-            {
-                img = Pipe;
-                Margin = T;
-                Name = ElementName;
-
-                ControlImage = new Image
-                {
-                    Source = img,
-                    Margin = Margin,
-                    Name = ElementName,
-                };
-            }
-
-            public bool IsOutDisplay(MainWindow Window)
-            {
-                return Margin.Right >= Window.Margin.Right;
-            }
-
-            public bool BirdTouch(Bird bird)
-            {
-                return (bird.Position.Top >= 0 && bird.Position.Top <= Margin.Top) || (bird.Position.Bottom >= 0 && bird.Position.Bottom <= Margin.Bottom);
-            }
-        }
-
-        public enum PipeModel
-        {
-            Bottom,
-            Top
-        }
-
     }
 }
