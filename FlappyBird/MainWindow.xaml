@@ -30,7 +30,7 @@
         <Image x:Name="Bird"
                     Margin="50,340,300,190"
                Stretch="Fill"/>
-        <Grid x:Name="PipesSection" x:FieldModifier="public" Panel.ZIndex="10">
+        <Grid x:Name="PipesSection" x:FieldModifier="public">
             <Image x:Name="p1"
                    Margin="180,0,170,300"
                    Stretch="Fill"
@@ -47,6 +47,14 @@
                    Margin="300,400,50,0"
                    Stretch="Fill"
                    Visibility="Visible"/>
+        </Grid>
+        <Grid x:Name="GameOverMenu"
+              Background="#CC000000"
+              Grid.RowSpan="2"
+              Grid.ColumnSpan="3"
+              Visibility="Hidden"
+              >
+            <Image Source="Assets/gameover.png" Margin="50"/>
         </Grid>
     </Grid>
 </Window>

@@ -2,7 +2,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace FlappyBird
@@ -11,49 +10,24 @@ namespace FlappyBird
     {
         [AllowNull]
         private static GameState Instance;
-        private readonly Counter Contador;
+        //private readonly Counter Contador;
+        private readonly SoundController SoundPlayer;
         private readonly MainWindow Main;
         private readonly Pipe Pipes;
+        private readonly Bird Passaro;
+
+        private GameTime TimeOfDay;
         private readonly int FrameRate = 60;
         private readonly double TimePerFrame = 0d;
 
-        private readonly Bird Passaro;
-        private BirdColor birdColor;
-        private GameTime TimeOfDay;
-        private bool IsGameOver = false;
-        private bool IsGameRunnin = false;
+        public bool IsGameOver = false;
+        //private bool IsGameRunnin = false;
         private bool StartGame = false;
-        private bool Reverse = false;
         private bool MouseUp = false;
 
-        private int FallVelocity = 4;
         private int Decremente = 2;
-        private int SkinIndex = 0;
         private int FrameCount = 0;
-
-
-        private readonly ImageSource[] RedBird = new ImageSource[]
-        {
-            new BitmapImage(new Uri("Assets/redbird-downflap.png", UriKind.Relative)),
-            new BitmapImage(new Uri("Assets/redbird-midflap.png", UriKind.Relative)),
-            new BitmapImage(new Uri("Assets/redbird-upflap.png", UriKind.Relative)),
-        };
-
-        private readonly ImageSource[] BlueBird = new ImageSource[]
-        {
-            new BitmapImage(new Uri("Assets/bluebird-downflap.png", UriKind.Relative)),
-            new BitmapImage(new Uri("Assets/bluebird-midflap.png", UriKind.Relative)),
-            new BitmapImage(new Uri("Assets/bluebird-upflap.png", UriKind.Relative))
-        };
-
-        private readonly ImageSource[] YellowBird = new ImageSource[]
-        {
-            new BitmapImage(new Uri("Assets/yellowbird-downflap.png", UriKind.Relative)),
-            new BitmapImage(new Uri("Assets/yellowbird-midflap.png", UriKind.Relative)),
-            new BitmapImage(new Uri("Assets/yellowbird-upflap.png", UriKind.Relative))
-        };
-
-        private readonly ImageSource GameOverImage = new BitmapImage(new Uri("Assets/gameover.png", UriKind.Relative));
+        private int Points = 0;
 
         public static GameState GetInstace(int Rate = 60)
         {
@@ -67,11 +41,11 @@ namespace FlappyBird
             RandomDayTime();
 
             FrameRate = Rate;
-            Contador = Counter.GetInstance();
+            //Contador = Counter.GetInstance();
             TimePerFrame = FrameToTime();
             Pipes = Pipe.GetInstance(TimeOfDay);
-            Passaro = new Bird(new Thickness(Main.Bird.Margin.Left, Main.Bird.Margin.Top, Main.Bird.Margin.Right, Main.Bird.Margin.Bottom));
-            RandomSkin();
+            Passaro = new Bird(new Thickness(Main.Bird.Margin.Left, Main.Bird.Margin.Top, Main.Bird.Margin.Right, Main.Bird.Margin.Bottom), Main, this);
+            SoundPlayer = SoundController.GetInstance();
         }
 
         public void MouseState(bool state)
@@ -89,57 +63,12 @@ namespace FlappyBird
                 Main.GameTemplate.Source = new BitmapImage(new Uri("Assets/background-night.png", UriKind.Relative));
         }
 
-        private void RandomSkin()
-        {
-            var random = new Random();
-            int EnumIndex = random.Next(0, 3);
-            birdColor = (BirdColor)(EnumIndex <= 1 ? EnumIndex : 2);
-        }
-
-        private int GetNextImageIndex()
-        {
-            if (Reverse)
-            {
-                SkinIndex = 0;
-                Reverse = false;
-                return SkinIndex;
-            }
-
-            if (SkinIndex < 2)
-            {
-                SkinIndex++;
-                return SkinIndex;
-            }
-            else
-            {
-                SkinIndex = 1;
-                Reverse = true;
-                return SkinIndex;
-            }
-        }
-
-        private void UpdateBirdSkin()
-        {
-            if (FrameCount % 4 != 0)
-                return;
-
-            if (birdColor == BirdColor.Blue)
-            {
-                Passaro.BirdImage = BlueBird[GetNextImageIndex()];
-            }
-            else if (birdColor == BirdColor.Red)
-            {
-                Passaro.BirdImage = RedBird[GetNextImageIndex()];
-            }
-            else if (birdColor == BirdColor.Yellow)
-            {
-                Passaro.BirdImage = YellowBird[GetNextImageIndex()];
-            }
-        }
 
         private void UpdateBirdSourceImage()
         {
-            UpdateBirdSkin();
+            if (!(FrameCount % 4 != 0))
+                Passaro.UpdateBirdSkin();
+
             Main.Bird.Source = Passaro.BirdImage;
         }
 
@@ -157,32 +86,6 @@ namespace FlappyBird
             UpdateBirdSourceImage();
         }
 
-        private void BirdMove()
-        {
-            Thickness Actual = Passaro.Position;
-            if (!MouseUp)
-            {
-                if (Actual.Top <= 0)
-                    return;
-
-                Passaro.Position = new Thickness(50, Actual.Top - FallVelocity, 300, Actual.Bottom + FallVelocity);
-                Main.Bird.Margin = Passaro.Position;
-            }
-            else
-            {
-                if (Actual.Bottom <= 80)
-                {
-#if !DEBUG
-                    IsGameOver = true;        
-#endif
-                    return;
-                }
-
-                Passaro.Position = new Thickness(50, Actual.Top + FallVelocity, 300, Actual.Bottom - FallVelocity);
-                Main.Bird.Margin = Passaro.Position;
-            }
-        }
-
         private void UpdateGame()
         {
             if (!StartGame)
@@ -192,17 +95,26 @@ namespace FlappyBird
                 if (!IsGameOver)
                 {
                     UpdateBirdSourceImage();
-                    BirdMove();
-                    Pipes.Move(2);
-                    IsGameOver = Pipes.BirdHits(Passaro);
+                    Passaro.BirdMove(!MouseUp);
+                    int newPoint = Pipes.Move(3);
+                    if (newPoint != 0)
+                        SoundPlayer.Play(SoundController.Sounds.PointWint);
+
+                    Points += newPoint;
+                    bool pipeHit = Pipes.BirdHits(Passaro);
+
+                    if (!IsGameOver)
+                        IsGameOver = pipeHit;
+
+                    if (IsGameOver)
+                        SoundPlayer.Play(SoundController.Sounds.Hit);
                 }
             }
         }
 
         private void GameOver()
         {
-            Main.StartImage.Source = GameOverImage;
-            Main.StartImage.Visibility = Visibility.Visible;
+            Main.GameOverMenu.Visibility = Visibility.Visible;
         }
 
         public void InitializeGameState()
@@ -231,13 +143,6 @@ namespace FlappyBird
             }
 
             GameOver();
-        }
-
-        private enum BirdColor
-        {
-            Blue,
-            Red,
-            Yellow
         }
 
         public enum GameTime

@@ -6,10 +6,18 @@ using System.Windows.Media.Imaging;
 
 namespace FlappyBird
 {
+    /// <summary>
+    /// Fornece suporte para exibir os pontos do jogador em forma de imagem personalizada
+    /// </summary>
+
     public class Counter
     {
         [AllowNull]
         private static Counter Instance;
+
+        /// <summary>
+        /// Referência de número e imagem
+        /// </summary>
 
         private readonly Dictionary<int, ImageSource> Numeros = new()
         {
@@ -25,11 +33,22 @@ namespace FlappyBird
             {9, new BitmapImage(new Uri("Assets/9.png", UriKind.Relative)) }
         };
 
+        /// <summary>
+        /// Retorna uma instância para a chamada, caso já exista outra. Caso contrário, cria uma nova instância do objeto <b>Counter</b> e o retorna
+        /// </summary>
+        /// <returns></returns>
+
         public static Counter GetInstance()
         {
             Instance ??= new Counter();
             return Instance;
         }
+
+        /// <summary>
+        /// Obtém um vetor de imagens que descrevem um número em sua ordem e valor
+        /// </summary>
+        /// <param name="number">Número para descrever</param>
+        /// <returns></returns>
 
         public ImageSource[] GetImageFromNumber(int number)
         {

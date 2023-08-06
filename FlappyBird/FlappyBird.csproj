@@ -34,6 +34,9 @@
     <None Remove="Assets\redbird-downflap.png" />
     <None Remove="Assets\redbird-midflap.png" />
     <None Remove="Assets\redbird-upflap.png" />
+    <None Remove="Assets\Sounds\hit.wav" />
+    <None Remove="Assets\Sounds\point.wav" />
+    <None Remove="Assets\Sounds\wing.wav" />
     <None Remove="Assets\yellowbird-downflap.png" />
     <None Remove="Assets\yellowbird-midflap.png" />
     <None Remove="Assets\yellowbird-upflap.png" />
@@ -70,6 +73,9 @@
     <Resource Include="Assets\redbird-downflap.png" />
     <Resource Include="Assets\redbird-midflap.png" />
     <Resource Include="Assets\redbird-upflap.png" />
+    <Resource Include="Assets\Sounds\hit.wav" />
+    <Resource Include="Assets\Sounds\point.wav" />
+    <Resource Include="Assets\Sounds\wing.wav" />
     <Resource Include="Assets\yellowbird-downflap.png" />
     <Resource Include="Assets\yellowbird-midflap.png" />
     <Resource Include="Assets\yellowbird-upflap.png" />

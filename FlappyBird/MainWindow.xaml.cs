@@ -14,8 +14,8 @@ namespace FlappyBird
         [AllowNull]
         private static MainWindow Main;
 
-        public static MainWindow Instance 
-        { 
+        public static MainWindow Instance
+        {
             get => Main;
         }
 
