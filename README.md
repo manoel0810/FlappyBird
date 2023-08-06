@@ -2,6 +2,10 @@
 
 Este é um projeto de jogo FlappyBird em desenvolvimento, implementado em C# usando a plataforma .NET Core 6.0 e a tecnologia Windows Presentation Foundation (WPF). O jogo é uma recriação do clássico FlappyBird, onde o jogador controla um pássaro e tenta atravessar obstáculos, evitando colidir com eles.
 
+## Créditos
+
+- Os recuros gráficos (imagens) e sonoros (sons), foram obtidos do reposítório público de [sourabhv](https://github.com/sourabhv) do jogo [FlappyBird](https://github.com/sourabhv/FlapPyBird)
+
 ## Funcionalidades Implementadas
 
 - Renderização do pássaro e do cenário usando WPF.
